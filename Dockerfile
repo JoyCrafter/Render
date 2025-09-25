@@ -1,10 +1,15 @@
 FROM ubuntu:22.04
 
+# maintainer 라벨은 Dockerfile2.txt에 있던 내용을 참고하여 추가했습니다.
+LABEL maintainer='Anton Melekhin'
+
 # DEBIAN_FRONTEND를 noninteractive로 설정하여 apt 설치 중 질문이 나타나지 않도록 합니다.
-ENV DEBIAN_FRONTEND=noninteractive \
-    container=docker # systemd 컨테이너임을 명시
+ENV DEBIAN_FRONTEND=noninteractive
+# 이 컨테이너가 systemd를 사용함을 명시합니다.
+ENV container=docker
 
 # 필요한 의존성 및 systemd를 설치합니다.
+# findutils, iproute2, sudo는 systemd와 컨테이너 관리에 유용할 수 있습니다.
 RUN apt update && \
     apt install -y software-properties-common wget curl git openssh-client tmate python3 \
                        systemd dbus iproute2 sudo && \
