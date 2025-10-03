@@ -1,17 +1,22 @@
-# Use an official Ubuntu runtime as a parent image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
-# Set environment variable for the port
-ENV PORT=8080
+LABEL maintainer='Anton Melekhin'
 
-# Install dependencies
-RUN apt-get update && \
-    apt-get install -y curl wget gnupg software-properties-common && \
-    curl -fsSL https://code-server.dev/install.sh | sh && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV container=docker \
+    DEBIAN_FRONTEND=noninteractive
 
-# Expose the correct port
-EXPOSE $PORT
+RUN INSTALL_PKGS='findutils iproute2 python3 python3-apt sudo systemd tmate' \
+    && apt-get update && apt-get install $INSTALL_PKGS -y --no-install-recommends \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Start code-server (listen on all interfaces)
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "none"]
+RUN find /etc/systemd/system \
+    /lib/systemd/system \
+    -path '*.wants/*' \
+    -not -name '*journald*' \
+    -not -name '*systemd-tmpfiles*' \
+    -not -name '*systemd-user-sessions*' \
+    -print0 | xargs -0 rm -vf
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+ENTRYPOINT [ "/lib/systemd/systemd" ]
