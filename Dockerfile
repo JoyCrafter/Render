@@ -1,22 +1,19 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
-LABEL maintainer='Anton Melekhin'
+# Install dependencies
+RUN apt update && \
+    apt install -y software-properties-common wget curl git openssh-client tmate python3 && \
+    apt clean
 
-ENV container=docker \
-    DEBIAN_FRONTEND=noninteractive
+# Create a dummy index page to keep the service alive
+RUN mkdir -p /app && echo "Tmate Session Running..." > /app/index.html
+WORKDIR /app
 
-RUN INSTALL_PKGS='findutils iproute2 python3 python3-apt sudo systemd' \
-    && apt-get update && apt-get install $INSTALL_PKGS -y --no-install-recommends \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Expose a fake web port to trick Railway into keeping container alive
+EXPOSE 6080
+EXPOSE 19132/udp
 
-RUN find /etc/systemd/system \
-    /lib/systemd/system \
-    -path '*.wants/*' \
-    -not -name '*journald*' \
-    -not -name '*systemd-tmpfiles*' \
-    -not -name '*systemd-user-sessions*' \
-    -print0 | xargs -0 rm -vf
-
-VOLUME [ "/sys/fs/cgroup" ]
-
-ENTRYPOINT [ "/lib/systemd/systemd" ]
+# Start a dummy Python web server to keep Railway service active
+# and start tmate session
+CMD python3 -m http.server 6080 & \
+    tmate -F
